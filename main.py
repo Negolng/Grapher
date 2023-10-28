@@ -20,7 +20,7 @@ class MainWindow(QMainWindow):
         self.show()
 
     def plot_data(self):
-        data = [random.random() for i in range(1, 10)]
+        data = [random.random() for _ in range(1, 10)]
 
         self.graph.ax.plot(data, 'r-')
         self.graph.draw()
@@ -40,7 +40,6 @@ class Plot(FigureCanvas):
         self.setParent(parent)
         self.ax = self.figure.add_subplot(111)
         self.ax.set_title('Kurwa')
-
 
 
 application = QApplication(sys.argv)
