@@ -24,7 +24,7 @@ class MainWindow(QMainWindow):
 
         self.randomButton.clicked.connect(self.calc_and_plot)
         self.clearButton.clicked.connect(self.clear_plot)
-        self.clear_plot()
+        self.calc_and_plot()
         self.show()
 
     def function_interpreter(self):

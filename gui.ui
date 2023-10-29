@@ -145,6 +145,9 @@
       <height>20</height>
      </rect>
     </property>
+    <property name="text">
+     <string>Y = x**2</string>
+    </property>
    </widget>
   </widget>
  </widget>
