@@ -3,11 +3,15 @@ from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5 import uic
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-import random
+from math import floor
 
 # https://pythonspot.com/pyqt5-matplotlib/
 # https://www.pythonguis.com/tutorials/plotting-matplotlib/
 # https://matplotlib.org/stable/
+
+
+class FormulaError(Exception):
+    pass
 
 
 class MainWindow(QMainWindow):
@@ -23,23 +27,43 @@ class MainWindow(QMainWindow):
         self.clear_plot()
         self.show()
 
+    def function_interpreter(self):
+        line = self.functionInput.text().lower()
+        # formula = ''
+        # type_of_formula = None
+        left_part, right_part = line.split('=')
+        if 'y' in left_part or 'f(x)' in left_part or 'x' in left_part:
+            return right_part
+        else:
+            raise FormulaError
+
     def calc_and_plot(self):
-        data = self.calculate_data()
-        if data is not None:
-            self.plot_data(data)
+        func = lambda x: eval(self.function_interpreter())
+        self.clear_plot()
+        xdata, ydata = self.calculate_data(func)
+        if xdata is not None:
+            self.plot_data(xdata, ydata)
 
-    def calculate_data(self):
+    def calculate_data(self, func):
+        ydata = []
+        xdata = []
         try:
-            data = [random.random() for _ in range(int(self.startXInput.text()), int(self.endXInput.text()) + 1)]
+            end = float(self.endXInput.text())
+            start = float(self.startXInput.text())
+            step = float(self.stepInput.text())
+            number_of_iterations = floor((end - start) / step) + 1
+            for _ in range(number_of_iterations):
+                ydata.append(func(start))
+                xdata.append(start)
+                start += step
             self.statusLabel.setText('Success')
-        except Exception:
-            data = None
+        except ValueError:
+            xdata, ydata = None, None
             self.statusLabel.setText('Error')
-        return data
+        return xdata, ydata
 
-    def plot_data(self, data):
-
-        self.graph.ax.plot(data)
+    def plot_data(self, xdata, ydata):
+        self.graph.ax.plot(xdata, ydata)
         self.graph.draw()
 
     def clear_plot(self):
@@ -52,6 +76,7 @@ class Plot(FigureCanvas):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         super().__init__(self.fig)
         self.ax = self.figure.add_subplot(111)
+        self.ax.grid(True)
         self.ax.set_title('Kurwa')
         self.setParent(parent)
 
