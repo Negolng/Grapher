@@ -10,8 +10,44 @@ from math import floor
 # https://matplotlib.org/stable/
 
 
+
+OPERANDS = {'/', '+', '-', '^', '*'}
+
+
 class FormulaError(Exception):
     pass
+
+
+class MathFunc:
+    def __init__(self):
+        self.things_to_do = []
+
+    @staticmethod
+    def multiply(x, y):
+        return x * y
+
+    @staticmethod
+    def divide(x, y):
+        return x / y
+
+    @staticmethod
+    def add(x, y):
+        return x + y
+
+    @staticmethod
+    def sub(x, y):
+        return x - y
+
+    @staticmethod
+    def pow(x, y):
+        return x**y
+
+    @staticmethod
+    def root(x, y):
+        return x**(1 / y)
+
+    def add_f(self, function):
+        self.things_to_do.append(function)
 
 
 class MainWindow(QMainWindow):
@@ -22,18 +58,27 @@ class MainWindow(QMainWindow):
         self.graph = Plot(self)
         self.graph.move(200, 35)
 
-        self.randomButton.clicked.connect(self.calc_and_plot)
+        self.plotButton.clicked.connect(self.calc_and_plot)
         self.clearButton.clicked.connect(self.clear_plot)
         self.calc_and_plot()
         self.show()
 
     def function_interpreter(self):
         line = self.functionInput.text().lower()
-        # formula = ''
-        # type_of_formula = None
+        func = MathFunc()
+
         left_part, right_part = line.split('=')
         if 'y' in left_part or 'f(x)' in left_part or 'x' in left_part:
-            return right_part
+            for i, symbol in enumerate(right_part):
+                if symbol == ' ':
+                    continue
+                if symbol == 'x':
+                    operand = right_part[i]
+                    while operand not in OPERANDS:
+                        i += 1
+                        operand = right_part[i]
+                    
+
         else:
             raise FormulaError
 
