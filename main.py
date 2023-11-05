@@ -49,6 +49,8 @@ class MathFunc:
     def add_f(self, function):
         self.things_to_do.append(function)
 
+# TODO: eval
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
