@@ -1,47 +1,70 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout, QLabel
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 from PyQt5 import uic
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from math import floor
+import math as mt
 from datetime import datetime
 
-# https://pythonspot.com/pyqt5-matplotlib/
-# https://www.pythonguis.com/tutorials/plotting-matplotlib/
-# https://matplotlib.org/stable/
 
+# КТО ПРОЕКТ ТРОНЕТ - В ЖОПУ ВЫЕБУ
 
-OPERANDS = '/*-+^'
+OPERANDS = '/*-+^ '
 NUMBERS = '123456789'
-SPECIALS = OPERANDS + NUMBERS
+KEY_WORDS = {'sin', 'tan', 'mod', 'cos'}
+ALLOWED = OPERANDS + NUMBERS + 'x'
 
 
-class FormulaError(Exception):
-    pass
+def mod(x, y):
+    return x % y
+
+
+def sin(x):
+    return mt.sin(x)
+
+
+def cos(x):
+    return mt.cos(x)
+
+
+def tan(x):
+    return mt.tan(x)
+
+
+def write_log(log):
+    with open('logs.txt', 'a') as f:
+        f.write(f'[{datetime.now()}] {log}\n')
+
+
+def is_it_safe(line):
+    one = 'y' in line or 'f(x)' in line or 'x' in line
+    two = all([symbol in ALLOWED for symbol in line])
+    return one or two
 
 
 class LogWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi('log_gui.ui')
-        layout = QGridLayout()
-        for i in range(10):
-            label = QLabel(self)
-            label.setText(i)
-            print('!!!')
-            layout.addWidget(label)
-            print('a')
-        log_widget = QWidget()
-        log_widget.setLayout(layout)
-        self.logArea.setWidgt(log_widget)
+        uic.loadUi('log_gui.ui', self)
+        self.updateButton.clicked.connect(self.read_logs)
+        self.clearButton.clicked.connect(self.remove_logs)
+        self.read_logs()
+        write_log('Logs window started successfully')
 
+    def read_logs(self):
+        self.logArea.clear()
+        logs = open('logs.txt', 'r')
+        self.logArea.addItems(logs.readlines())
+        logs.close()
 
-
-def is_it_safe(line):
-    safe = True
-    if not ('y' in line or 'f(x)' in line or 'x' in line):
-        safe = False
-    return safe
+    def remove_logs(self):
+        with open('logs.txt', 'w') as f:
+            f.write('')
+        self.read_logs()
+        msg = QMessageBox(self)
+        msg.setText('Logs have been removed')
+        msg.show()
 
 
 class MainWindow(QMainWindow):
@@ -52,26 +75,37 @@ class MainWindow(QMainWindow):
         self.graph = Plot(self)
         self.graph.move(200, 35)
 
+        self.log_window = LogWindow()
+
         self.plotButton.clicked.connect(self.calc_and_plot)
         self.clearButton.clicked.connect(self.clear_plot)
-        self.logButton.clicked.connect(self.show_logs)
+        self.logButton.clicked.connect(self.log_window.show)
         self.calc_and_plot()
+        write_log('Application started successfully')
         self.show()
 
     def function_interpreter(self):
         line = self.functionInput.text().lower()
         left_part, right_part = line.split('=')
-        if is_it_safe(left_part):
+        if is_it_safe(right_part):
             return right_part.replace('^', '**')
+        write_log('Error with function interpretation')
+        self.statusLabel.setText('Error')
+
+    def func(self):
+        ret = self.function_interpreter()
+        if ret:
+            return lambda x: eval(ret)
+        return lambda x: x
 
     def calc_and_plot(self):
-        func = lambda x: eval(self.function_interpreter())
         self.clear_plot()
-        xdata, ydata = self.calculate_data(func)
+        xdata, ydata = self.calculate_data(self.func())
         if xdata is not None:
             self.plot_data(xdata, ydata)
 
     def calculate_data(self, func):
+        write_log(f'Started calculating function {self.functionInput.text()}')
         ydata = []
         xdata = []
         try:
@@ -84,26 +118,22 @@ class MainWindow(QMainWindow):
                 xdata.append(start)
                 start += step
             self.statusLabel.setText('Success')
-            with open('logs.txt', 'a') as f:
-                f.write(f'[{datetime.now()}] Calculated data Successfully!\n')
+            write_log('Calculated data successfully')
         except ValueError:
             xdata, ydata = None, None
-            with open('logs.txt', 'a') as f:
-                f.write(f'[{datetime.now()}] Calculation error\n')
+            write_log('Calculation error')
             self.statusLabel.setText('Error')
         return xdata, ydata
 
     def plot_data(self, xdata, ydata):
         self.graph.ax.plot(xdata, ydata)
+        write_log('Plotted data successfully')
         self.graph.draw()
 
     def clear_plot(self):
         self.graph.ax.cla()
         self.graph.draw()
-
-    def show_logs(self):
-        self.log_window = LogWindow()
-        self.log_window.show()
+        write_log('Cleared plot successfully')
 
 
 class Plot(FigureCanvas):
