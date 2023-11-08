@@ -9,6 +9,7 @@ from datetime import datetime
 
 
 # КТО ПРОЕКТ ТРОНЕТ - В ЖОПУ ВЫЕБУ
+# Я серьёзно.
 
 OPERANDS = '/*-+^ '
 NUMBERS = '123456789'
