@@ -1,6 +1,7 @@
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QInputDialog
 from matplotlib.figure import Figure
+from PyQt5.QtGui import QPixmap
 from datetime import datetime
 from PyQt5 import uic
 import math as mt
@@ -60,6 +61,10 @@ class MainWindow(QMainWindow):
         self.set_lang()
         self.load_window.set_lang()
         self.log_window.set_lang()
+
+        pixmap = QPixmap("Guis/Image.png")
+        self.imageLb.setPixmap(pixmap)
+
         self.plotButton.clicked.connect(self.calc_and_plot)
         self.clearButton.clicked.connect(self.clear_plot)
         self.logButton.clicked.connect(self.log_window.show)
