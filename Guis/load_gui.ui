@@ -52,7 +52,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QLabel" name="label">
+   <widget class="QLabel" name="loadLb">
     <property name="geometry">
      <rect>
       <x>290</x>

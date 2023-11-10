@@ -47,23 +47,54 @@ class UsefulTools:
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi('main_gui.ui', self)
-
+        uic.loadUi('Guis/main_gui.ui', self)
+        self.lg = Language()
+        self.lgF = False
         self.graph = Plot(self)
         self.graph.move(200, 35)
-
         self.log_window = LogWindow()
         self.load_window = LoadWindow(self)
-
+        self.lg.switch_russian()
+        self.load_window.lg.switch_russian()
+        self.log_window.lg.switch_russian()
+        self.set_lang()
+        self.load_window.set_lang()
+        self.log_window.set_lang()
         self.plotButton.clicked.connect(self.calc_and_plot)
         self.clearButton.clicked.connect(self.clear_plot)
         self.logButton.clicked.connect(self.log_window.show)
         self.saveButton.clicked.connect(self.save_or_update)
         self.loadButton.clicked.connect(self.load_window.show)
-
+        self.langButton.clicked.connect(self.switch_lang)
         self.calc_and_plot()
         UsefulTools.write_log('Application started successfully')
         self.show()
+
+    def set_lang(self):
+        self.plotButton.setText(self.lg.plotB)
+        self.clearButton.setText(self.lg.plotC)
+        self.logButton.setText(self.lg.logsB)
+        self.saveButton.setText(self.lg.saveB)
+        self.loadButton.setText(self.lg.loadB)
+        self.formulaLb.setText(self.lg.formulaLb)
+        self.startLb.setText(self.lg.beginL)
+        self.endLb.setText(self.lg.endL)
+        self.stepLb.setText(self.lg.stepL)
+
+    def switch_lang(self):
+        if self.lgF:
+            self.lg.switch_russian()
+            self.load_window.lg.switch_russian()
+            self.log_window.lg.switch_russian()
+            self.lgF = False
+        else:
+            self.lg.switch_english()
+            self.load_window.lg.switch_english()
+            self.log_window.lg.switch_english()
+            self.lgF = True
+        self.set_lang()
+        self.load_window.set_lang()
+        self.log_window.set_lang()
 
     def function_interpreter(self):
         line = self.functionInput.text().lower()
@@ -72,13 +103,17 @@ class MainWindow(QMainWindow):
             if UsefulTools.is_it_safe(right_part):
                 return right_part.replace('^', '**')
         UsefulTools.write_log('Error with function interpretation')
-        self.statusLabel.setText('Error')
+        self.statusLabel.setText(self.lg.error)
 
     def func(self):
         ret = self.function_interpreter()
-        if ret:
-            return lambda x: eval(ret)
-        return lambda x: x
+        try:
+            if ret:
+                return lambda x: eval(ret)
+            return lambda x: x
+        except EOFError:
+            UsefulTools.write_log('Error with function interpretation')
+            self.statusLabel.setText(self.lg.error)
 
     def calc_and_plot(self):
         self.clear_plot()
@@ -99,12 +134,15 @@ class MainWindow(QMainWindow):
                 ydata.append(func(start))
                 xdata.append(start)
                 start += step
-            self.statusLabel.setText('Success')
+            self.statusLabel.setText(self.lg.successL)
             UsefulTools.write_log('Calculated data successfully')
         except ValueError:
             xdata, ydata = None, None
             UsefulTools.write_log('Calculation error')
-            self.statusLabel.setText('Error')
+            self.statusLabel.setText(self.lg.error)
+        except EOFError:
+            UsefulTools.write_log('Error with function interpretation')
+            self.statusLabel.setText(self.lg.error)
         return xdata, ydata
 
     def plot_data(self, xdata, ydata):
@@ -121,14 +159,13 @@ class MainWindow(QMainWindow):
         connection = sqlite3.connect('database.sqlite')
         cursor = connection.cursor()
         names = set(map(''.join, cursor.execute('SELECT name FROM functions').fetchall()))
-        print(names)
-        name, ok_pressed = QInputDialog.getText(self, "Name input",
-                                                "Choose function's name")
+        name, ok_pressed = QInputDialog.getText(self, self.lg.saveB,
+                                                self.lg.loadL)
         if ok_pressed:
             if name in names:
                 msg = QMessageBox(self)
-                msg.setText("This function exists already, it will be updated")
-                msg.setWindowTitle('Update')
+                msg.setText(self.lg.existMsg)
+                msg.setWindowTitle(self.lg.existMsgT)
                 msg.exec()
                 self.update_old_function(name)
             else:
@@ -160,12 +197,19 @@ class MainWindow(QMainWindow):
 class LoadWindow(QMainWindow):
     def __init__(self, parent):
         super().__init__()
+        self.lg = Language()
         self.main_w = parent
-        uic.loadUi('load_gui.ui', self)
+        uic.loadUi('Guis/load_gui.ui', self)
         self.loadButton.clicked.connect(self.load_by_name)
         self.deleteButton.clicked.connect(self.delete)
         self.updateButton.clicked.connect(self.get_list)
         self.get_list()
+
+    def set_lang(self):
+        self.loadButton.setText(self.lg.loadB)
+        self.deleteButton.setText(self.lg.delB)
+        self.updateButton.setText(self.lg.loadUpB)
+        self.loadLb.setText(self.lg.loadL)
 
     def get_list(self):
         self.listWidget.clear()
@@ -201,8 +245,8 @@ class LoadWindow(QMainWindow):
                 self.nameInput.clear()
             else:
                 msg = QMessageBox(self)
-                msg.setText("There is no such name in the list")
-                msg.setWindowTitle('Error')
+                msg.setText(self.lg.nonameMsg)
+                msg.setWindowTitle(self.lg.error)
                 msg.exec()
 
     def delete(self):
@@ -216,8 +260,8 @@ class LoadWindow(QMainWindow):
         connection.commit()
         connection.close()
         msg = QMessageBox(self)
-        msg.setText("Deleted successfully")
-        msg.setWindowTitle('Delete')
+        msg.setText(self.lg.delMsg)
+        msg.setWindowTitle(self.lg.delB)
         msg.exec()
         self.get_list()
         self.nameInput.clear()
@@ -226,11 +270,16 @@ class LoadWindow(QMainWindow):
 class LogWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi('log_gui.ui', self)
+        self.lg = Language()
+        uic.loadUi('Guis/log_gui.ui', self)
         self.updateButton.clicked.connect(self.read_logs)
         self.clearButton.clicked.connect(self.remove_logs)
         self.read_logs()
         UsefulTools.write_log('Logs window started successfully')
+
+    def set_lang(self):
+        self.updateButton.setText(self.lg.logsUpB)
+        self.clearButton.setText(self.lg.logsClB)
 
     def read_logs(self):
         self.logArea.clear()
@@ -243,8 +292,8 @@ class LogWindow(QMainWindow):
             f.write('')
         self.read_logs()
         msg = QMessageBox(self)
-        msg.setText('Logs have been removed')
-        msg.setWindowTitle('Logs')
+        msg.setText(self.lg.logsMsg)
+        msg.setWindowTitle(self.lg.logsB)
         msg.show()
 
 
@@ -276,7 +325,7 @@ class Language:
         self.existMsg = ''
         self.existMsgT = ''
         self.nonameMsg = ''
-        self.MsgT = ''
+        self.error = ''
         self.delMsg = ''
         self.logsMsg = ''
         self.successL = ''
@@ -299,7 +348,7 @@ class Language:
         self.existMsg = 'This function exists already, it will be updated'
         self.existMsgT = 'Update'
         self.nonameMsg = 'There is no such name in the list'
-        self.MsgT = 'Error'
+        self.error = 'Error'
         self.delMsg = 'Deleted successfully'
         self.logsMsg = 'Logs have been cleared'
         self.successL = 'Success!'
@@ -322,7 +371,7 @@ class Language:
         self.existMsg = 'Эта функция уже существует, так что она будет обновлена'
         self.existMsgT = 'Обновить'
         self.nonameMsg = 'В списке нет такого имеи'
-        self.MsgT = 'Ошибка'
+        self.error = 'Ошибка'
         self.delMsg = 'Удалено успешно'
         self.logsMsg = 'Логи были очищены'
         self.successL = 'Успех'
