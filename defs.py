@@ -8,22 +8,20 @@ import math as mt
 import sqlite3
 
 
-class MathFunctions:
-    @staticmethod
-    def mod(x, y):
-        return x % y
+def mod(x, y):
+    return x % y
 
-    @staticmethod
-    def sin(x):
-        return mt.sin(x)
 
-    @staticmethod
-    def cos(x):
-        return mt.cos(x)
+def sin(x):
+    return mt.sin(x)
 
-    @staticmethod
-    def tan(x):
-        return mt.tan(x)
+
+def cos(x):
+    return mt.cos(x)
+
+
+def tan(x):
+    return mt.tan(x)
 
 
 class UsefulTools:
@@ -123,7 +121,7 @@ class MainWindow(QMainWindow):
             if ret:
                 return lambda x: eval(ret)
             return lambda x: x
-        except EOFError:
+        except EOFError or Exception:
             UsefulTools.write_log('Error with function interpretation')
             self.statusLabel.setText(self.lg.error)
 
@@ -154,6 +152,10 @@ class MainWindow(QMainWindow):
             self.statusLabel.setText(self.lg.error)
         except EOFError:
             UsefulTools.write_log('Error with function interpretation')
+            self.statusLabel.setText(self.lg.error)
+        except SyntaxError or Exception:
+            xdata, ydata = None, None
+            UsefulTools.write_log('Calculation error')
             self.statusLabel.setText(self.lg.error)
         return xdata, ydata
 
@@ -200,11 +202,14 @@ class LoadWindow(QMainWindow):
                     '''
         new_list = []
         result = cursor.execute(request).fetchall()
-        connection.close()
         for line in result:
             number, name, formula, group = line
-            final_string = f'№{number} | Name: {name}, Formula: {formula}, Group: {group}'
+            helper = cursor.execute(f"""SELECT name FROM groups WHERE id={group}""").fetchall()
+            helper2 = ''.join(list(map(lambda x: x[0], helper)))
+            final_string = f"№{number} | Name: {name}, Formula: {formula}, Group:{helper2}"
+
             new_list.append(final_string)
+        connection.close()
         UsefulTools.write_log('got list of functions successfully')
         self.listWidget.addItems(new_list)
 
@@ -271,11 +276,11 @@ class SaveWindow(QMainWindow):
         UsefulTools.write_log('Language set successfully')
 
     @staticmethod
-    def new_group(n):
+    def new_group(name):
         connection = sqlite3.connect('database.sqlite')
         cursor = connection.cursor()
         req = f'''
-        INSERT INTO groups(group) VALUES({n})
+        INSERT INTO groups(name) VALUES({name})
         '''
         cursor.execute(req).fetchall()
         connection.commit()
@@ -283,78 +288,79 @@ class SaveWindow(QMainWindow):
         UsefulTools.write_log('new group created successfully')
 
     @staticmethod
-    def is_group_there(n):
+    def is_group_there(name):
         connection = sqlite3.connect('database.sqlite')
         cursor = connection.cursor()
         req = f'''
-                SELECT numberG FROM groups
+                SELECT name FROM groups
                 '''
         groups = list(map(lambda x: x[0], cursor.execute(req).fetchall()))
         connection.commit()
         connection.close()
-        return n in groups
+        return name in groups
 
     def save_or_update(self):
         connection = sqlite3.connect('database.sqlite')
         cursor = connection.cursor()
         names = set(map(''.join, cursor.execute('SELECT name FROM functions').fetchall()))
         name = self.nameInput.text()
-        try:
-            if name:
-                group = int(self.groupInput.text())
-                if SaveWindow.is_group_there(group):
-                    if name in names:
-                        msg = QMessageBox(self)
-                        msg.setText(self.lg.existMsg)
-                        msg.setWindowTitle(self.lg.existMsgT)
-                        msg.exec()
-                        self.update_old_function(name)
+        if name:
+            group = self.groupInput.text()
+            if not SaveWindow.is_group_there(group):
+                if name in names:
+                    msg = QMessageBox(self)
+                    msg.setText(self.lg.existMsg)
+                    msg.setWindowTitle(self.lg.existMsgT)
+                    msg.exec()
+                    self.update_old_function(name)
 
-                    else:
-                        self.save_new_funtion(name)
-                    self.hide()
                 else:
-                    cursor.execute(f'''INSERT INTO groups(numberG) VALUES({group})''').fetchall()
-                    connection.commit()
-                    self.save_or_update()
+                    self.save_new_funtion(name)
+                self.hide()
             else:
-                msg = QMessageBox(self)
-                msg.setText(self.lg.nameMsg)
-                msg.setWindowTitle(self.lg.nameMsgT)
-                msg.exec()
-                UsefulTools.write_log('No name error successfully')
-            connection.close()
-
-        except ValueError:
-            self.errorLb.setText(self.lg.error)
-            UsefulTools.write_log('Error with group name while checking')
+                try:
+                    SaveWindow.new_group(group)
+                    self.save_or_update()
+                except sqlite3.IntegrityError:
+                    self.errorLb.setText(self.lg.error)
+                    UsefulTools.write_log('Error with group name while checking')
+        else:
+            msg = QMessageBox(self)
+            msg.setText(self.lg.nameMsg)
+            msg.setWindowTitle(self.lg.nameMsgT)
+            msg.exec()
+            UsefulTools.write_log('No name error successfully')
+        connection.close()
 
     def update_old_function(self, name):
-        try:
-            connection = sqlite3.connect('database.sqlite')
-            cursor = connection.cursor()
+        connection = sqlite3.connect('database.sqlite')
+        cursor = connection.cursor()
+        if SaveWindow.is_group_there(self.groupInput.text()):
             request = f'''
-                        UPDATE functions
-                        SET formula = "{self.functionInput.text()}", group={int(self.groupInput.text())}
-                        WHERE name = "{name}"
-                     '''
+                            UPDATE functions
+                            SET formula = "{self.functionInput.text()}", numberG=(SELECT id FROM groups WHERE name=
+                            "{self.groupInput.text()}")
+                            WHERE name = "{name}"
+                         '''
             cursor.execute(request).fetchall()
             self.errorLb.setText(self.lg.successL)
             connection.commit()
             connection.close()
             UsefulTools.write_log('Save updated successfully')
-        except ValueError:
-            self.errorLb.setText(self.lg.error)
-            UsefulTools.write_log('Error with group name while updating')
+        else:
+            SaveWindow.new_group(self.groupInput.text())
+            self.update_old_function(name)
 
     def save_new_funtion(self, name):
+
         connection = sqlite3.connect('database.sqlite')
         cursor = connection.cursor()
         try:
+            cursor.execute(f'''INSERT INTO groups(name) VALUES("{self.groupInput.text()}")''').fetchall()
             request = f'''
             INSERT INTO functions(name, formula, numberG) VALUES("{name}", "{self.functionInput.text()}", 
-{int(self.groupInput.text())})
-             '''
+            (SELECT id FROM groups WHERE name="{self.groupInput.text()}"))
+            '''
             cursor.execute(request).fetchall()
             print('a')
             connection.commit()

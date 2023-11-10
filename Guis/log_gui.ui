@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
+ <class>LogWindow</class>
+ <widget class="QMainWindow" name="LogWindow">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Logs Window</string>
+   <string>Logs</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QListWidget" name="logArea">

@@ -51,7 +51,7 @@
      <rect>
       <x>270</x>
       <y>10</y>
-      <width>101</width>
+      <width>111</width>
       <height>20</height>
      </rect>
     </property>
@@ -139,7 +139,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Step =</string>
+     <string>step =</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="functionInput">

@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
+ <class>LoadWindow</class>
+ <widget class="QMainWindow" name="LoadWindow">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>418</width>
+    <width>560</width>
     <height>600</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Load Function</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QListWidget" name="listWidget">
@@ -19,7 +19,7 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>256</width>
+      <width>391</width>
       <height>571</height>
      </rect>
     </property>
@@ -32,7 +32,7 @@
    <widget class="QPushButton" name="loadButton">
     <property name="geometry">
      <rect>
-      <x>290</x>
+      <x>430</x>
       <y>50</y>
       <width>111</width>
       <height>31</height>
@@ -45,7 +45,7 @@
    <widget class="QLineEdit" name="nameInput">
     <property name="geometry">
      <rect>
-      <x>290</x>
+      <x>430</x>
       <y>20</y>
       <width>113</width>
       <height>20</height>
@@ -55,7 +55,7 @@
    <widget class="QLabel" name="loadLb">
     <property name="geometry">
      <rect>
-      <x>290</x>
+      <x>430</x>
       <y>0</y>
       <width>121</width>
       <height>16</height>
@@ -68,7 +68,7 @@
    <widget class="QPushButton" name="deleteButton">
     <property name="geometry">
      <rect>
-      <x>290</x>
+      <x>430</x>
       <y>90</y>
       <width>111</width>
       <height>31</height>
@@ -81,7 +81,7 @@
    <widget class="QPushButton" name="updateButton">
     <property name="geometry">
      <rect>
-      <x>270</x>
+      <x>410</x>
       <y>560</y>
       <width>141</width>
       <height>23</height>
