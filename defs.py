@@ -104,6 +104,7 @@ class MainWindow(QMainWindow):
         self.load_window.set_lang()
         self.log_window.set_lang()
         self.save_window.set_lang()
+        UsefulTools.write_log('Language changed successfully')
 
     def function_interpreter(self, line=None):
         if not line:
@@ -180,6 +181,7 @@ class LoadWindow(QMainWindow):
         self.loadButton.clicked.connect(self.load_by_name)
         self.deleteButton.clicked.connect(self.delete)
         self.updateButton.clicked.connect(self.get_list)
+        UsefulTools.write_log('Loaded load window successfully')
         self.get_list()
 
     def set_lang(self):
@@ -187,6 +189,7 @@ class LoadWindow(QMainWindow):
         self.deleteButton.setText(self.lg.delB)
         self.updateButton.setText(self.lg.loadUpB)
         self.loadLb.setText(self.lg.loadL)
+        UsefulTools.write_log('Language set successfully')
 
     def get_list(self):
         self.listWidget.clear()
@@ -199,9 +202,10 @@ class LoadWindow(QMainWindow):
         result = cursor.execute(request).fetchall()
         connection.close()
         for line in result:
-            number, name, formula, step = line
-            final_string = f'№{number} | Name: {name}, Formula: {formula}'
+            number, name, formula, group = line
+            final_string = f'№{number} | Name: {name}, Formula: {formula}, Group: {group}'
             new_list.append(final_string)
+        UsefulTools.write_log('got list of functions successfully')
         self.listWidget.addItems(new_list)
 
     def load_by_name(self):
@@ -218,12 +222,14 @@ class LoadWindow(QMainWindow):
                 formula = str(''.join(*cursor.execute(request).fetchall()))
                 connection.close()
                 self.main_w.functionInput.setText(formula)
+                UsefulTools.write_log('Loaded a function successfully')
                 self.hide()
                 self.nameInput.clear()
             else:
                 msg = QMessageBox(self)
                 msg.setText(self.lg.nonameMsg)
                 msg.setWindowTitle(self.lg.error)
+                UsefulTools.write_log('Error, no function found')
                 msg.exec()
 
     def delete(self):
@@ -240,6 +246,7 @@ class LoadWindow(QMainWindow):
         msg.setText(self.lg.delMsg)
         msg.setWindowTitle(self.lg.delB)
         msg.exec()
+        UsefulTools.write_log('Deleted a function successfully')
         self.get_list()
         self.nameInput.clear()
 
@@ -251,6 +258,7 @@ class SaveWindow(QMainWindow):
         uic.loadUi('Guis/save_gui.ui', self)
         self.lg = Language()
         self.saveButton.clicked.connect(self.save_or_update)
+        UsefulTools.write_log('Loaded save window successfully')
 
     def set_data(self, formula):
         self.functionInput.setText(formula)
@@ -259,7 +267,8 @@ class SaveWindow(QMainWindow):
         self.saveButton.setText(self.lg.saveB)
         self.formulaLb.setText(self.lg.formulaLb)
         self.nameLb.setText(self.lg.loadL)
-        self.groupLb.setText('Group: ')
+        self.groupLb.setText(self.lg.group)
+        UsefulTools.write_log('Language set successfully')
 
     @staticmethod
     def new_group(n):
@@ -271,6 +280,7 @@ class SaveWindow(QMainWindow):
         cursor.execute(req).fetchall()
         connection.commit()
         connection.close()
+        UsefulTools.write_log('new group created successfully')
 
     @staticmethod
     def is_group_there(n):
@@ -312,10 +322,12 @@ class SaveWindow(QMainWindow):
                 msg.setText(self.lg.nameMsg)
                 msg.setWindowTitle(self.lg.nameMsgT)
                 msg.exec()
+                UsefulTools.write_log('No name error successfully')
             connection.close()
 
         except ValueError:
             self.errorLb.setText(self.lg.error)
+            UsefulTools.write_log('Error with group name while checking')
 
     def update_old_function(self, name):
         try:
@@ -330,8 +342,10 @@ class SaveWindow(QMainWindow):
             self.errorLb.setText(self.lg.successL)
             connection.commit()
             connection.close()
+            UsefulTools.write_log('Save updated successfully')
         except ValueError:
             self.errorLb.setText(self.lg.error)
+            UsefulTools.write_log('Error with group name while updating')
 
     def save_new_funtion(self, name):
         connection = sqlite3.connect('database.sqlite')
@@ -346,8 +360,10 @@ class SaveWindow(QMainWindow):
             connection.commit()
             connection.close()
             self.errorLb.setText(self.lg.successL)
+            UsefulTools.write_log('Saved a function successfully')
         except ValueError:
             self.errorLb.setText(self.lg.error)
+            UsefulTools.write_log('Error with group name while saving')
 
 
 class LogWindow(QMainWindow):
@@ -363,12 +379,14 @@ class LogWindow(QMainWindow):
     def set_lang(self):
         self.updateButton.setText(self.lg.logsUpB)
         self.clearButton.setText(self.lg.logsClB)
+        UsefulTools.write_log('Language set successfully')
 
     def read_logs(self):
         self.logArea.clear()
         logs = open('logs.txt', 'r')
         self.logArea.addItems(logs.readlines())
         logs.close()
+        UsefulTools.write_log('Logs loaded successfully')
 
     def remove_logs(self):
         with open('logs.txt', 'w') as f:
@@ -387,6 +405,7 @@ class Plot(FigureCanvas):
         self.ax = self.figure.add_subplot(111)
         self.ax.grid(True)
         self.setParent(parent)
+        UsefulTools.write_log('Axes created successfully')
 
 
 class Language:
@@ -415,6 +434,7 @@ class Language:
         self.checkT = ''
         self.nameMsg = ""
         self.nameMsgT = ''
+        self.group = ''
 
     def switch_english(self):
         self.plotB = 'Plot'
@@ -441,6 +461,7 @@ class Language:
         self.checkT = 'Save points'
         self.nameMsg = "Choose function's name, please"
         self.nameMsgT = 'Error'
+        self.group = 'Group: '
 
     def switch_russian(self):
         self.plotB = 'Начертить'
@@ -467,3 +488,4 @@ class Language:
         self.checkT = 'Сохранить точки'
         self.nameMsg = "Выберите имя функции, пожалуйста"
         self.nameMsgT = 'Ошибка'
+        self.group = 'Группа: '
