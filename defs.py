@@ -206,7 +206,7 @@ class LoadWindow(QMainWindow):
             number, name, formula, group = line
             helper = cursor.execute(f"""SELECT name FROM groups WHERE id={group}""").fetchall()
             helper2 = ''.join(list(map(lambda x: x[0], helper)))
-            final_string = f"№{number} | Name: {name}, Formula: {formula}, Group:{helper2}"
+            final_string = f"№{number} | Name: {name}, Formula: {formula}, Group: {helper2}"
 
             new_list.append(final_string)
         connection.close()
